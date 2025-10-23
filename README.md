@@ -10,7 +10,8 @@
  - And more!
 
 # Installation
-This section will come soon when installation is made significantly easier
+This section will come soon when installation is made significantly easier. For the meantime you will have to build from source
+but I'm currently working on a easy way to install this via a package manager like yay.
 
 # Customization
 Customising RiceTools is really simple. If you havent ran **RiceTools** yet, **RiceTools** will generate a config file for you. Simply go to the directory
