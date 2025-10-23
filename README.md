@@ -10,7 +10,7 @@
  - And more!
 
 # Installation
-This section will come soon when installation is made significantly easier#
+This section will come soon when installation is made significantly easier
 
 # Customization
 Customising RiceTools is really simple. If you havent ran **RiceTools** yet, **RiceTools** will generate a config file for you. Simply go to the directory
