@@ -7,6 +7,7 @@
  - Easy Installation
  - Color Customization for each option
  - Better Theming & Stylisation
+ - Easy addition/removal of applications/commands via CLI (as an alternative to config)
  - And more!
 
 # Installation
