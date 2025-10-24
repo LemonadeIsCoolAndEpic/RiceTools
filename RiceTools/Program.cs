@@ -1,18 +1,17 @@
-﻿using System.Diagnostics;
-using Spectre.Console;
+﻿using Spectre.Console;
 
 namespace RiceTools;
 
 internal class Program
 {
-    private static string configDirectory;
-
     private static void Main(string[] args)
     {
-        AnsiConsole.Write(new Rule());
+        // Display the title screen
         AnsiConsole.Write(new FigletText("RiceTools!").Centered().Color(Color.DarkGoldenrod));
-        AnsiConsole.Write(new Rule());
+        AnsiConsole.Write(new Rule().RuleTitle("ricetools v0.2").HeavyBorder());
+        AnsiConsole.WriteLine();
 
+        // Handle command arguments (e.g. --help)
         if (args.Contains("--help") || args.Contains("?") || args.Contains("-h"))
         {
             AnsiConsole.Markup(
@@ -22,8 +21,10 @@ internal class Program
             return;
         }
 
-        configDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) +
+        // Locate where the .config file should be
+        string configDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) +
                           "/.config/ricetools/ricetools.config";
+        // If the config does NOT exist, prompt the user to auto generate it for them
         if (!File.Exists(configDirectory))
         {
             AnsiConsole.Markup(
@@ -36,8 +37,11 @@ internal class Program
                     .WithConverter(choice => choice ? "Y" : "n"));
             if (createConfig)
             {
+                // Create the config directories and file
                 Directory.CreateDirectory(configDirectory.Replace("/ricetools.config", string.Empty));
                 File.Create(configDirectory).Dispose();
+                // Then write some basic comments to get the user started
+                // TODO: Maybe make this clone a config preset from github
                 File.AppendAllLines(configDirectory, new List<string>
                 {
                     "# Add your executable options here",
@@ -49,7 +53,7 @@ internal class Program
         }
 
         var config = File.ReadAllLines(configDirectory);
-        var configParseCollection = ParseConfig(config);
+        var configParseCollection = ConfigParser.Parse(config);
 
         // Creates a selection menu to select the different command options
         var selection = AnsiConsole.Prompt(
@@ -57,83 +61,9 @@ internal class Program
                 .Title("What would you like to execute?")
                 .PageSize(10)
                 .MoreChoicesText("[grey](Move up and down to show more tools!)[/]")
-                .AddChoices(configParseCollection.names.ToArray()).EnableSearch());
+                .AddChoices(configParseCollection.Names.ToArray()).EnableSearch());
 
-        var selectionIndex = configParseCollection.names.IndexOf(selection);
-        RunCommand(configParseCollection.commands[selectionIndex]);
+        var selectionIndex = configParseCollection.Names.IndexOf(selection);
+        ShellManager.RunCommand(configParseCollection.Commands[selectionIndex]);
     }
-
-    private static void RunCommand(string command)
-    {
-        // Directory to BASH SHELL
-        var shell = "/bin/bash";
-
-        // Need to use shell with -c command for it to work?
-        var args = $"-c \"{command}\"";
-
-        try
-        {
-            var process = Process.Start(new ProcessStartInfo
-            {
-                FileName = shell,
-                Arguments = args,
-                UseShellExecute = false, // Must be false for redirecting streams/process control
-                RedirectStandardOutput = false, // Keep false if the external command handles its own output
-                RedirectStandardError = false, // Keep false if the external command handles its own errors
-                CreateNoWindow = false
-            });
-
-            process.WaitForExit();
-            Environment.Exit(0);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error running command: {ex.Message}");
-        }
-
-        Console.Clear();
-    }
-
-    public static ConfigParseCollection ParseConfig(string[] configLines)
-    {
-        var ItemNames = new List<string>();
-        var ItemCommands = new List<string>();
-
-        foreach (var line in configLines)
-        {
-            var alteredLine = line;
-
-            // Remove/Disguard of ANY comments
-            var commentPosition = line.IndexOf("#");
-            if (commentPosition != -1)
-                alteredLine = line.Remove(commentPosition);
-            if (alteredLine == string.Empty)
-                continue;
-
-            // Parse the Name and Command
-            var parsedLine = alteredLine.Split(",");
-            if (parsedLine.Length < 2)
-                // Format is incorrect if it is less than 2
-                AnsiConsole.MarkupLine("[red]Config Error: \"" + alteredLine + "\" is formatted incorrectly[/]");
-
-            // Trim the white space
-            var name = parsedLine[0].Trim();
-            var command = parsedLine[1].Trim();
-
-            ItemNames.Add(name);
-            ItemCommands.Add(command);
-        }
-
-        var configParseCollection = new ConfigParseCollection();
-        configParseCollection.names = ItemNames;
-        configParseCollection.commands = ItemCommands;
-
-        return configParseCollection;
-    }
-}
-
-public struct ConfigParseCollection
-{
-    public List<string> names;
-    public List<string> commands;
 }
