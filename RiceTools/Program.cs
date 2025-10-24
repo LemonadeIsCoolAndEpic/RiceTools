@@ -4,11 +4,13 @@ namespace RiceTools;
 
 internal class Program
 {
+    public static MenuSorting ListSorting { get; set; } = MenuSorting.Default;
+    
     private static void Main(string[] args)
     {
         // Display the title screen
         AnsiConsole.Write(new FigletText("RiceTools!").Centered().Color(Color.DarkGoldenrod));
-        AnsiConsole.Write(new Rule().RuleTitle("ricetools v0.2").HeavyBorder());
+        AnsiConsole.Write(new Rule().RuleTitle("ricetools v0.3").HeavyBorder());
         AnsiConsole.WriteLine();
 
         // Handle command arguments (e.g. --help)
@@ -54,14 +56,24 @@ internal class Program
 
         var config = File.ReadAllLines(configDirectory);
         var configParseCollection = ConfigParser.Parse(config);
+        
+        // If there are no list items in the config file then prompt the user to add them and return
+        if (configParseCollection.Names.Count == 0)
+        {
+            AnsiConsole.Markup(
+                "[bold blue]Your list is currently empty. You can add items to the list in the config file[/]\n" +
+                "To find your config file go to ~/.config/ricetools/ricetools.config");
+            return;
+        }
 
         // Creates a selection menu to select the different command options
         var selection = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
-                .Title("What would you like to execute?")
+                .Title("[bold gold3_1]What would you like to execute?[/]")
                 .PageSize(10)
                 .MoreChoicesText("[grey](Move up and down to show more tools!)[/]")
-                .AddChoices(configParseCollection.Names.ToArray()).EnableSearch());
+                .AddChoices(configParseCollection.Names.ToArray())
+                .EnableSearch());
 
         var selectionIndex = configParseCollection.Names.IndexOf(selection);
         ShellManager.RunCommand(configParseCollection.Commands[selectionIndex]);
