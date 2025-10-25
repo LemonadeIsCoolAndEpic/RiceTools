@@ -17,8 +17,8 @@ internal class Program
         if (args.Contains("--help") || args.Contains("?") || args.Contains("-h"))
         {
             AnsiConsole.Markup(
-                "[bold darkgoldenrod]RiceTools[/] is a simple, easy to use solution \nto launch/run commands commands from the terminal in a bookmark like manner\n" +
-                "You can customise the names and commands in \".config/ricetools/ricetools.config\"" +
+                "[bold darkgoldenrod]RiceTools[/] is a [bold]simple, easy to use[/] solution \nto launch/run commands commands from the terminal in a bookmark like manner\n" +
+                "You can customise the names and commands in \".config/ricetools/ricetools.config\"\n" +
                 "   --help/-h/?            offers help and guidance about the ricetools utility");
             return;
         }
@@ -46,14 +46,28 @@ internal class Program
                 // TODO: Maybe make this clone a config preset from github
                 File.AppendAllLines(configDirectory, new List<string>
                 {
+                    "[menu.options]",
                     "# Add your executable options here",
-                    "# In the format: name, command",
+                    "# In the format: \"name, command\"",
+                    "# for example:",
+                    "# Music Player, spotify_player",
                     "# name = the way it will appear in the list",
-                    "# command = what will be executed once that has been selected"
+                    "# command = what will be executed once that has been selected\n",
+                    "[menu.sort]",
+                    "sort = \"default\"",
+                    "# sort can be either \"alphabetic\", \"most used\" or \"default\"",
+                    "# default will sort in the way they are listed in the config\n",
+                    "[menu.color]",
+                    "list-colors = \"\"",
+                    "# list-colors can be the name of any color (e.g. \"red\")",
+                    "# or a list of colors (e.g. \"red\", \"blue\", \"green\")",
+                    "# or \"random\" for each list item to get a random color",
+                    "# or \"random-full\" for the entire list to be a random color"
                 });
             }
         }
-
+        
+        // Read and parse the config
         var config = File.ReadAllLines(configDirectory);
         var configParseCollection = ConfigParser.Parse(config);
         
@@ -62,9 +76,11 @@ internal class Program
         {
             AnsiConsole.Markup(
                 "[bold blue]Your list is currently empty. You can add items to the list in the config file[/]\n" +
-                "To find your config file go to ~/.config/ricetools/ricetools.config");
+                "[italic darkgoldenrod]To find your config file go to ~/.config/ricetools/ricetools.config[/]");
             return;
         }
+        
+        configParseCollection = ListSorter.Sort(configParseCollection);
 
         // Creates a selection menu to select the different command options
         var selection = AnsiConsole.Prompt(
